@@ -1,79 +1,94 @@
+using UnityEngine;
 using System;
 using System.Collections;
 using System.IO;
 using Leap;
-using UnityEngine;
 
 public class Game : MonoBehaviour 
 {
-    public GameObject cursor;
-    public GameObject target;
-    public Material green;
-    public Material yellow;
-    public AudioClip popSound;
-    public AudioSource popSource;
-    public GUIText pointText;
-    public GUIText instructionsText;
-    public Material transGreen;
-    public Material transYellow;
-    public GameObject posCube;
-    public GameObject pointer;
-    public Light roomLight;
-    public AudioSource bassSource;
-    public AudioSource drumsSource;
+    public GameObject CursorChair;
+    public GameObject Target;
+    public Material Green;
+    public Material Yellow;
+    public AudioClip PopSound;
+    public AudioSource PopSource;
+    public GUIText PointText;
+    public GUIText InstructionsText;
+    public Material TransGreen;
+    public Material TransYellow;
+    public GameObject PosCube;
+    public GameObject Pointer;
+    public Light RoomLight;
+    public AudioSource BassSource;
+    public AudioSource DrumsSource;
 
-    static float scale = 0.1f; //mm to cm
-    static float maxTime = 40f; //max time before the trial is skipped
-    static int totalTrials = 6;
-    static float cap = 10.0f;
-    static float minDistance = cap - 2.0f;
-    static float thresholdDistance = 1.5f;
-    Controller controller;
-    Frame currentFrame;
-    Frame prevFrame;
-    Vector3 currentPosition = new Vector3();
-    Vector3 prevPosition = new Vector3();
-    bool isFirst = true;
-    bool isDocked = false;
-    string folderPath;
-    float initDistance;
-    float finalDistance;
-    float prevTotalTime = 0;
-    int trialCount = 0;
-    string color = "white";
-    bool skipWindow = false;
-    int timer = 0;
-    bool endWindow = false;
-    bool initPinch = true;
+    private static float scale = 0.1f; // mm to cm
+    private static float maxTime = 40f; // max time before the trial is skipped
+    private static int totalTrials = 6;
+    private static float cap = 10.0f;
+    private static float minDistance = cap - 2.0f;
+    private static float thresholdDistance = 1.5f;
+    private Controller controller;
+    private Frame currentFrame;
+    private Frame prevFrame;
+    private Vector3 currentPosition = new Vector3();
+    private Vector3 prevPosition = new Vector3();
+    private bool isFirst = true;
+    private bool isDocked = false;
+    private string folderPath;
+    private float initDistance;
+    private float finalDistance;
+    private float prevTotalTime = 0;
+    private int trialCount = 0;
+    private string color = "white";
+    private bool skipWindow = false;
+    private int timer = 0;
+    private bool endWindow = false;
+    private bool initPinch = true;
 
-    void OnGUI()
+    private void OnGUI()
     {
-        if (!instructionsText.enabled && !skipWindow && !endWindow)
+        if (!InstructionsText.enabled && !skipWindow && !endWindow)
         {
             timer = (int)(Time.time - prevTotalTime);
         }
 
-        GUI.Box(new Rect(UnityEngine.Screen.width - 200, 0, 200, 100), 
-                "<size=36>Trial: " + trialCount + "/" + totalTrials + "\n<color=" + color + ">Time: " + timer + "</color> </size>");
+        GUI.Box(
+            new Rect(UnityEngine.Screen.width - 200, 0, 200, 100), 
+            "<size=36>Trial: " + trialCount + "/" + totalTrials + "\n<color=" + color + ">Time: " + timer + "</color> </size>");
         if (skipWindow)
         {
-            GUI.Window(1, new Rect((UnityEngine.Screen.width * 0.5f) - 105, (UnityEngine.Screen.height * 0.5f) - 50, 210, 100), 
-                       DoWindow, "<size=28>Time is up</size>");
+            GUI.Window(
+                1, 
+                new Rect(
+                    (UnityEngine.Screen.width * 0.5f) - 105, 
+                    (UnityEngine.Screen.height * 0.5f) - 50, 
+                    210, 
+                    100), 
+                DoWindow, 
+                "<size=28>Time is up</size>");
         }
         else if (endWindow) 
         {
-            GUI.Window(0, new Rect((UnityEngine.Screen.width * 0.5f) - 105, (UnityEngine.Screen.height * 0.5f) - 50, 230, 100), 
-                       DoWindow, "<size=28>Trials complete</size>");
+            GUI.Window(
+                0, 
+                new Rect(
+                        (UnityEngine.Screen.width * 0.5f) - 105, 
+                        (UnityEngine.Screen.height * 0.5f) - 50, 
+                        230, 
+                        100), 
+                DoWindow,
+                "<size=28>Trials complete</size>");
         }
     }
-    
-    void Awake()
+
+    private void Awake()
     {
         controller = new Controller();
         CreateFile();
     }
 
-    void Start() 
+    private void Start() 
     {
         Cursor.visible = false; 
         SetPosition();
@@ -85,7 +100,7 @@ public class Game : MonoBehaviour
         prevTotalTime = Time.time;
     }
 
-    void Update() 
+    private void Update() 
     {
         if (Input.GetKeyUp(KeyCode.Escape)) 
         {
@@ -93,21 +108,21 @@ public class Game : MonoBehaviour
             Application.Quit();
         }
 
-        if (instructionsText.enabled && !isFirst) 
+        if (InstructionsText.enabled && !isFirst) 
         {
-            instructionsText.enabled = false;
+            InstructionsText.enabled = false;
             prevTotalTime = Time.time;
         }
 
-        if (pointText.enabled) 
+        if (PointText.enabled) 
         {
             if ((int)(Time.time - prevTotalTime) > 1)
             {
-                pointText.enabled = false;
+                PointText.enabled = false;
             }
         }
 
-        if (!instructionsText.enabled && !endWindow)
+        if (!InstructionsText.enabled && !endWindow)
         {
             float currentTime = Time.time - prevTotalTime;
             if (currentTime > maxTime - 10f)
@@ -129,10 +144,10 @@ public class Game : MonoBehaviour
                 Tool pointable = currentFrame.Tools.Frontmost;
                 HandList hands = currentFrame.Hands;
                 Hand hand = hands[0];
-                pointer.GetComponent<Renderer>().material = yellow;
+                Pointer.GetComponent<Renderer>().material = Yellow;
                 if (hand.PinchStrength == 1)
                 {
-                    pointer.GetComponent<Renderer>().material = green;
+                    Pointer.GetComponent<Renderer>().material = Green;
                     if (initPinch)
                     {
                         if (skipWindow)
@@ -140,23 +155,24 @@ public class Game : MonoBehaviour
                             SetPosition();
                             skipWindow = false;
                             color = "white";
-                            popSource.PlayOneShot(popSound);
+                            PopSource.PlayOneShot(PopSound);
                             prevTotalTime = Time.time;
                         }
                         else if (endWindow)
                         {
-                            popSource.PlayOneShot(popSound);
+                            PopSource.PlayOneShot(PopSound);
                             Application.LoadLevel(Application.loadedLevel);
                         }
                         else if (isDocked)
                         {
-                            popSource.PlayOneShot(popSound);
+                            PopSource.PlayOneShot(PopSound);
                             float trialTime = Time.time - prevTotalTime;
-                            File.AppendAllText(folderPath + ".csv", trialTime.ToString() + "," + initDistance.ToString()
-                                               + "," + finalDistance.ToString() + Environment.NewLine);
+                            File.AppendAllText(
+                                folderPath + ".csv",
+                                trialTime.ToString() + "," + initDistance.ToString() + "," + finalDistance.ToString() + Environment.NewLine);
                             SetPosition();
                             trialCount++;
-                            pointText.enabled = true;
+                            PointText.enabled = true;
                             color = "white";
                             if (trialCount >= totalTrials)
                             {
@@ -177,21 +193,24 @@ public class Game : MonoBehaviour
                 if (pointable.IsValid && !skipWindow && !endWindow) 
                 {
                     Vector stabilizedPosition = pointable.StabilizedTipPosition;
-                    currentPosition = new Vector3(stabilizedPosition.x * scale,
-                                                  stabilizedPosition.y * scale,
-                                                  -stabilizedPosition.z * scale);
+                    currentPosition = new Vector3(
+                        stabilizedPosition.x * scale,
+                        stabilizedPosition.y * scale,
+                        -stabilizedPosition.z * scale);
                     Vector directionLeap = pointable.Direction;
-                    Vector3 direction = new Vector3(directionLeap.x,
-                                                    directionLeap.y,
-                                                    -directionLeap.z);
-                    pointer.transform.LookAt(direction.normalized + pointer.transform.position);
+                    Vector3 direction = new Vector3(
+                        directionLeap.x,
+                        directionLeap.y,
+                        -directionLeap.z);
+                    Pointer.transform.LookAt(direction.normalized + Pointer.transform.position);
                     if (!isFirst) 
                     {
                         Vector3 transVec = currentPosition - prevPosition;
-                        cursor.transform.Translate(transVec);
-                        cursor.transform.position = new Vector3(Mathf.Clamp(cursor.transform.position.x, -cap, cap),
-                                                                Mathf.Clamp(cursor.transform.position.y, -cap, cap),
-                                                                Mathf.Clamp(cursor.transform.position.z, -cap, cap));
+                        CursorChair.transform.Translate(transVec);
+                        CursorChair.transform.position = new Vector3(
+                            Mathf.Clamp(CursorChair.transform.position.x, -cap, cap),
+                            Mathf.Clamp(CursorChair.transform.position.y, -cap, cap),
+                            Mathf.Clamp(CursorChair.transform.position.z, -cap, cap));
                     }
 
                     isFirst = false;
@@ -206,55 +225,56 @@ public class Game : MonoBehaviour
             }
         }
     }
-    
-    void OnDestroy() 
+
+    private void OnDestroy() 
     {
         controller.Dispose();
     }
-    
-    void SetPosition()
+
+    private void SetPosition()
     { 
         Vector3 position = new Vector3();
         initDistance = 50.0f;
         while (initDistance < minDistance || initDistance > 10)
         {
-            position = new Vector3(UnityEngine.Random.Range(-cap, cap),
-                                   UnityEngine.Random.Range(-cap, cap),
-                                   UnityEngine.Random.Range(-cap, cap));
-            initDistance = Vector3.Distance(position, target.transform.position);
+            position = new Vector3(
+                UnityEngine.Random.Range(-cap, cap),
+                UnityEngine.Random.Range(-cap, cap),
+                UnityEngine.Random.Range(-cap, cap));
+            initDistance = Vector3.Distance(position, Target.transform.position);
         }
 
-        cursor.transform.position = position;
+        CursorChair.transform.position = position;
     }
-    
-    void EvaluateDock()
+
+    private void EvaluateDock()
     {
-        Vector3 targetV = target.transform.position;
-        Vector3 cursorV = cursor.transform.position;
+        Vector3 targetV = Target.transform.position;
+        Vector3 cursorV = CursorChair.transform.position;
         finalDistance = Vector3.Distance(targetV, cursorV);
         float distRatio = 1f - (finalDistance / thresholdDistance);
 
         if (finalDistance <= thresholdDistance)
         {
             isDocked = true;
-            transGreen.color = new Vector4(0, distRatio, 0, 1);
-            posCube.GetComponent<Renderer>().material = transGreen;
+            TransGreen.color = new Vector4(0, distRatio, 0, 1);
+            PosCube.GetComponent<Renderer>().material = TransGreen;
             float intense = ((distRatio * 0.5f) * 4f) + 1f;
-            roomLight.intensity = intense;
-            drumsSource.volume = 1f - (finalDistance / thresholdDistance);
-            bassSource.volume = 1f;
+            RoomLight.intensity = intense;
+            DrumsSource.volume = 1f - (finalDistance / thresholdDistance);
+            BassSource.volume = 1f;
         }
         else
         {
-            bassSource.volume = 0;
-            drumsSource.volume = 0;
+            BassSource.volume = 0;
+            DrumsSource.volume = 0;
             isDocked = false;
-            roomLight.intensity = 1.0f;
-            posCube.GetComponent<Renderer>().material = transYellow;
+            RoomLight.intensity = 1.0f;
+            PosCube.GetComponent<Renderer>().material = TransYellow;
         }
     }
-    
-    void CreateFile()
+
+    private void CreateFile()
     {
         folderPath = @"Log\" + System.DateTime.Now.ToString("MM-dd-yy_hh-mm-ss");
         string columns = "Time,initDistance,finalDistance";
@@ -262,7 +282,7 @@ public class Game : MonoBehaviour
         File.AppendAllText(folderPath + ".csv", columns + Environment.NewLine);
     }
 
-    void DoWindow(int windowID)
+    private void DoWindow(int windowID)
     {
         if (windowID == 0)
         {
